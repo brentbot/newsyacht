@@ -1,8 +1,47 @@
-from dataclasses import dataclass
+import tomllib
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import NewType
+from typing import NewType, Self
 
 Color = NewType("Color", str)
+
+
+@dataclass
+class Feed:
+    link: str
+    "The link to the feed."
+
+    tags: list[str] = field(default_factory=list)
+    "Any tags to associate with the feed."
+
+    color: Color | None = None
+    "The color to use for the label, if any."
+
+    label: str | None = None
+    "The label to use instead of the author, if any."
+
+
+@dataclass
+class Config:
+    feeds: list[Feed]
+
+    @classmethod
+    def from_path(cls, path: Path | str) -> Self:
+        """
+        Load config.toml as TOML or urls in the legacy URL format.
+        """
+        path = Path(path)
+        match path.name:
+            case "config.toml":
+                data = tomllib.loads(path.read_text())
+                if feeds := data.get("feed"):
+                    return cls([Feed(**feed) for feed in feeds])
+            case "urls":
+                urls = load_urls(path)
+                feeds = [Feed(link=url.link, color=url.color) for url in urls]
+                return cls(feeds)
+
+        raise ValueError(f"Failed to load config from {path}")
 
 
 @dataclass
@@ -30,7 +69,7 @@ def load_urls(path: Path | str) -> list[Url]:
             case [url]:
                 urls.append(Url(url))
             case [url, color]:
-                urls.append(Url(url, color))
+                urls.append(Url(url, Color(color)))
             case line:
                 msg = f"Unable to parse line: {line}"
                 raise ValueError(msg)
