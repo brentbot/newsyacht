@@ -50,6 +50,11 @@ class App:
 
         self.app.jinja_env.filters["label_text_color"] = label_text_color
 
+        def updated_post(db: Db, item_id: int):
+            if request.headers.get("X-Newsyacht-Fragment") == "post":
+                return render_template("post_fragment.html", post=db.get_item(item_id))
+            return redirect(request.referrer or url_for("index"))
+
         @self.app.route("/")
         def index():
             unread_only = request.args.get("unread") == "1"
@@ -82,7 +87,8 @@ class App:
         @self.app.route("/read/<int:item_id>")
         def read(item_id):
             with Db(self.db) as db:
-                db.set_read(item_id)
+                if request.args.get("mark") != "0":
+                    db.set_read(item_id)
                 link = db.get_link(item_id)
             return redirect(link)
 
@@ -90,27 +96,25 @@ class App:
         def mark_read(item_id):
             with Db(self.db) as db:
                 db.set_read(item_id)
-            return redirect(request.referrer or url_for("index"))
+                return updated_post(db, item_id)
 
         @self.app.route("/mark-unread/<int:item_id>", methods=["POST"])
         def mark_unread(item_id):
             with Db(self.db) as db:
                 db.set_read(item_id, False)
-            return redirect(request.referrer or url_for("index"))
+                return updated_post(db, item_id)
 
         @self.app.route("/upvote/<int:item_id>", methods=["POST"])
         def upvote(item_id):
             with Db(self.db) as db:
                 Model.change_vote(db, item_id, models.Vote.UP)
-
-            return redirect(request.referrer or url_for("index"))
+                return updated_post(db, item_id)
 
         @self.app.route("/downvote/<int:item_id>", methods=["POST"])
         def downvote(item_id):
             with Db(self.db) as db:
                 Model.change_vote(db, item_id, models.Vote.DOWN)
-
-            return redirect(request.referrer or url_for("index"))
+                return updated_post(db, item_id)
 
     def run(self, *args, **kwargs):
         self.app.run(*args, **kwargs)
