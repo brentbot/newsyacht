@@ -262,3 +262,30 @@ def test_reversible_votes(seeded_db, client, vote):
             for text, count in counts.items()
             if expected != Vote.NONE
         }
+
+
+def test_read_posts_stay_visible(seeded_db, client):
+    post = seeded_db.get_posts()[0]
+    seeded_db.set_read(post.id)
+
+    response = client.get("/?all=1")
+    assert post.title in response.text
+    assert 'class="post is-read"' in response.text
+
+    unread = client.get("/?all=1&unread=1")
+    assert post.title not in unread.text
+
+
+def test_read_state_can_be_reversed(seeded_db, client):
+    post = seeded_db.get_posts()[0]
+    assert client.post(f"/mark-read/{post.id}").status_code == 302
+    assert seeded_db.get_item(post.id).is_read
+
+    assert client.post(f"/mark-unread/{post.id}").status_code == 302
+    assert not seeded_db.get_item(post.id).is_read
+
+
+def test_feed_includes_read_posts(seeded_db, client):
+    post = seeded_db.get_posts()[0]
+    seeded_db.set_read(post.id)
+    assert post.title in client.get(f"/feed/{post.feed_id}").text

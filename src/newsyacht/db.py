@@ -289,11 +289,11 @@ class Db:
         )
         return cur.fetchone()["title"]
 
-    def set_read(self, item_id):
+    def set_read(self, item_id: int, read: bool = True):
         with self.conn:
             self.conn.execute(
-                "UPDATE items SET is_read = 1 WHERE id = ?",
-                (item_id,),
+                "UPDATE items SET is_read = ? WHERE id = ?",
+                (int(read), item_id),
             )
 
     def set_vote(self, item_id: int, vote: newsyacht.models.Vote):

@@ -1,6 +1,6 @@
 {% macro render_post(post) %}
 
-<li class="post">
+<li class="post{% if post.is_read %} is-read{% endif %}" data-post-id="{{ post.id }}">
   <div class="post-vote">
     <form method="post" action="/upvote/{{ post.id }}">
       <button
@@ -53,9 +53,9 @@
 		{% if post.comments %}
 		· <a href="{{post.comments}}">Comments</a>
 		{% endif %}
-		{% if not post.is_read %}
-		· <a href="/mark-read/{{ post.id }}">Mark Read</a>
-		{% endif %}
+		· <form class="post-read-action" method="post" action="/{{ 'mark-unread' if post.is_read else 'mark-read' }}/{{ post.id }}">
+		  <button type="submit">{{ 'Mark unread' if post.is_read else 'Mark read' }}</button>
+		</form>
 	  </div>
 	</div>
 
