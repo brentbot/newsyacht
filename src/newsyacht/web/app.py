@@ -59,6 +59,8 @@ class App:
         @self.app.route("/")
         def index():
             unread_only = request.args.get("unread") == "1"
+            tag = request.args.get("tag") or None
+            fragment = request.headers.get("X-Newsyacht-Fragment")
             before = request.args.get("before", type=int)
             if "before" in request.args and (before is None or not 0 < before < 2**63):
                 abort(400)
@@ -68,24 +70,41 @@ class App:
                     read=False if unread_only else None,
                     limit=PAGE_SIZE + 1,
                     before=before,
+                    tag=tag,
                 )
+                tags = db.get_tags() if fragment != "posts" else []
             has_more = len(posts) > PAGE_SIZE
             posts = posts[:PAGE_SIZE]
             more_url = (
-                url_for("index", before=posts[-1].id, unread=1 if unread_only else None)
+                url_for(
+                    "index",
+                    before=posts[-1].id,
+                    unread=1 if unread_only else None,
+                    tag=tag,
+                )
                 if has_more
                 else None
             )
 
-            fragment = request.headers.get("X-Newsyacht-Fragment") == "posts"
-            template = "posts_fragment.html" if fragment else "index.html"
+            match fragment:
+                case "posts":
+                    template = "posts_fragment.html"
+                case "page":
+                    template = "index_content.html"
+                case _:
+                    template = "index.html"
             response = self.app.make_response(
                 render_template(
-                    template, posts=posts, unread_only=unread_only, more_url=more_url
+                    template,
+                    posts=posts,
+                    unread_only=unread_only,
+                    more_url=more_url,
+                    tag=tag,
+                    tags=tags,
                 )
             )
             response.vary.add("X-Newsyacht-Fragment")
-            if fragment and more_url:
+            if fragment == "posts" and more_url:
                 response.headers["X-Newsyacht-Next"] = more_url
             return response
 

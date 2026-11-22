@@ -116,6 +116,7 @@ class Db:
         *,
         limit: int | None = None,
         before: int | None = None,
+        tag: str | None = None,
     ) -> list[DbItem]:
         """
         Get posts from the database, optionally filtered by `days` and `read`.
@@ -157,14 +158,34 @@ class Db:
             if before is not None
             else ""
         )
+        tag_filter = (
+            """EXISTS (
+                SELECT 1 FROM feed_tags
+                WHERE feed_tags.feed_id = items.feed_id AND feed_tags.tag = ?
+            )"""
+            if tag is not None
+            else ""
+        )
+        params: list[int | str] = []
+        if before is not None:
+            params.append(before)
+        if tag is not None:
+            params.append(tag)
         return self._get_posts(
             link_filter,
             date_filter,
             read_filter,
             before_filter,
-            params=(before,) if before is not None else (),
+            tag_filter,
+            params=tuple(params),
             limit=limit,
         )
+
+    def get_tags(self) -> list[str]:
+        rows = self.conn.execute(
+            "SELECT DISTINCT tag FROM feed_tags ORDER BY tag COLLATE NOCASE, tag"
+        )
+        return [row["tag"] for row in rows]
 
     def get_posts_by_id(self, feed_id: FeedId) -> list[DbItem]:
         return self._get_posts("items.feed_id = ?", params=(feed_id,))

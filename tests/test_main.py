@@ -364,3 +364,51 @@ def test_paginated_posts(db, hn_feed, hn_post, client, monkeypatch):
 @pytest.mark.parametrize("before", ["bogus", "0", "9223372036854775808"])
 def test_invalid_page_cursor(client, before):
     assert client.get(f"/?before={before}").status_code == 400
+
+
+def test_feed_tags_filter_posts(db, hn_post, client):
+    db.insert_feeds(
+        [
+            ConfigFeed(link="https://news.ycombinator.com/rss", tags=["software"]),
+            ConfigFeed(link="https://example.com/philosophy.xml", tags=["philosophy"]),
+        ]
+    )
+    feed_id, score, item = hn_post[0]
+    other = deepcopy(item)
+    other.title = "Philosophy article"
+    other.guid = other.title
+    db.insert_items([(feed_id, score, item), (FeedId(2), score, other)])
+
+    assert len(db.get_posts()) == 2
+    assert len(db.get_posts(tag="software")) == 1
+    assert db.get_tags() == ["philosophy", "software"]
+
+    response = client.get("/?tag=software")
+    assert item.title in response.text
+    assert "Philosophy article" not in response.text
+    assert 'class="tag-navigation"' in response.text
+    assert 'aria-current="page">software</a>' in response.text
+
+    fragment = client.get("/?tag=software", headers={"X-Newsyacht-Fragment": "page"})
+    assert fragment.status_code == 200
+    assert '<main id="main-content">' in fragment.text
+    assert "<html" not in fragment.text
+
+
+def test_tag_pagination_preserves_filter(db, hn_feed, hn_post, client, monkeypatch):
+    monkeypatch.setattr("newsyacht.web.app.PAGE_SIZE", 1)
+    db.insert_feeds([ConfigFeed(link=hn_feed[0].link, tags=["software"])])
+    feed_id, _score, item = hn_post[0]
+    other = deepcopy(item)
+    other.title = "Second software article"
+    other.guid = other.title
+    db.insert_items([(feed_id, Score(0.9), item), (feed_id, Score(0.8), other)])
+    response = client.get(
+        "/?tag=software&unread=1", headers={"X-Newsyacht-Fragment": "posts"}
+    )
+    assert "tag=software" in response.headers["X-Newsyacht-Next"]
+    assert "unread=1" in response.headers["X-Newsyacht-Next"]
+
+    next_page = client.get(response.headers["X-Newsyacht-Next"])
+    assert other.title in next_page.text
+    assert 'data-read-filter="unread"' in next_page.text

@@ -214,3 +214,42 @@ body {
     text-align: center;
   }
 }
+
+.tag-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #ddd;
+  font:
+    0.75rem/1.5 system-ui,
+    sans-serif;
+}
+
+.tag-navigation a {
+  color: #4f6680;
+  text-decoration: none;
+}
+
+.tag-navigation a[aria-current="page"] {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.tag-separator {
+  color: #aaa;
+}
+
+.view-navigation {
+  display: flex;
+  gap: 0.85rem;
+  margin: 0.45rem 0;
+  font-size: 0.85rem;
+}
+
+.view-navigation a[aria-current="page"] {
+  font-weight: 700;
+}

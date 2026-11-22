@@ -114,3 +114,62 @@ document.addEventListener("click", async (event) => {
     more.dataset.pending = "0";
   }
 });
+
+let activeNavigation = null;
+
+const navigate = async (url, pushHistory) => {
+  activeNavigation?.abort();
+  const controller = new AbortController();
+  activeNavigation = controller;
+  try {
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      headers: { "X-Newsyacht-Fragment": "page" },
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`Navigation failed (${response.status})`);
+    const template = document.createElement("template");
+    template.innerHTML = await response.text();
+    if (controller !== activeNavigation) return;
+    const newMain = template.content.querySelector("#main-content");
+    const oldMain = document.getElementById("main-content");
+    if (!oldMain || !newMain) throw new Error("Missing page content");
+    const tagScroll = oldMain.querySelector(".tag-navigation")?.scrollLeft;
+    oldMain.replaceWith(newMain);
+    const tagBar = newMain.querySelector(".tag-navigation");
+    if (tagBar && tagScroll !== undefined) tagBar.scrollLeft = tagScroll;
+    if (pushHistory) {
+      history.pushState({}, "", url);
+      newMain.querySelector("h2")?.focus({ preventScroll: true });
+      window.scrollTo(0, 0);
+    }
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    console.error(error);
+    window.location.assign(url);
+  } finally {
+    if (activeNavigation === controller) activeNavigation = null;
+  }
+};
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a[data-nav]");
+  if (
+    !link ||
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.shiftKey
+  )
+    return;
+  event.preventDefault();
+  void navigate(link.href, true);
+});
+
+window.addEventListener("popstate", () => {
+  if (document.getElementById("main-content")) {
+    void navigate(window.location.href, false);
+  }
+});

@@ -12,15 +12,17 @@
     <title>newsyacht</title>
   </head>
     <body>
-  	<nav class="navigation" aria-label="Main navigation">
-    <a href="/">Recent</a>
-    <a href="/?unread=1">Unread</a>
-    <a href="/archive">Read</a>
-  </nav>
-  	<div id="ptr">Pull to refresh…</div>
-  	<h2>Recent</h2>
-  	<ul class="post-list" id="post-list">
-  	  
+      <div id="ptr">Pull to refresh…</div>
+      <main id="main-content">
+    
+    <nav class="view-navigation" aria-label="Post views">
+      <a href="/" data-nav aria-current="page">Recent</a>
+      <a href="/?unread=1" data-nav>Unread</a>
+      <a href="/archive">Read</a>
+    </nav>
+    <h2 tabindex="-1">Recent</h2>
+    <ul class="post-list" id="post-list">
+      
   
   
   
@@ -91,8 +93,9 @@
   
   
   
-  	</ul>
-  	
+    </ul>
+    
+  </main>
     </body>
   </html>
   '''
