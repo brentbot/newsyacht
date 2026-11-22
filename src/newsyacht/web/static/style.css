@@ -147,22 +147,30 @@ body {
   backdrop-filter: blur(10px);
 }
 
-div.navigation {
-  float: none;
+.post.is-read .post-title a {
+  color: #81858c;
+  font-weight: normal;
 }
 
-div.navigation {
-  height: 25px;
-}
-
-div.navigation ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-div.navigation ul li {
+.post-read-action {
   display: inline;
-  margin: 0 2px;
+  margin: 0;
+}
+
+.post-read-action button {
+  border: 0;
+  background: none;
   padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.post-read-action button:hover {
+  text-decoration: underline;
+}
+
+.navigation {
+  display: flex;
+  gap: 0.75rem;
 }

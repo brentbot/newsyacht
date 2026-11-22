@@ -52,13 +52,13 @@ class App:
 
         @self.app.route("/")
         def index():
+            unread_only = request.args.get("unread") == "1"
             with Db(self.db) as db:
-                posts = (
-                    db.get_posts()
-                    if request.args.get("all")
-                    else db.get_posts(days=3, read=False)
+                posts = db.get_posts(
+                    days=None if request.args.get("all") else 3,
+                    read=False if unread_only else None,
                 )
-            return render_template("index.html", posts=posts)
+            return render_template("index.html", posts=posts, unread_only=unread_only)
 
         @self.app.route("/archive")
         def archive():
@@ -77,7 +77,6 @@ class App:
             with Db(self.db) as db:
                 feed_title = db.get_feed_title(feed_id)
                 posts = db.get_posts_by_id(models.FeedId(feed_id))
-            posts = [post for post in posts if not post.is_read]
             return render_template("feed.html", posts=posts, feed_title=feed_title)
 
         @self.app.route("/read/<int:item_id>")
@@ -87,13 +86,16 @@ class App:
                 link = db.get_link(item_id)
             return redirect(link)
 
-        @self.app.route("/mark-read/<int:item_id>")
+        @self.app.route("/mark-read/<int:item_id>", methods=["POST"])
         def mark_read(item_id):
-            "Like `App.read` but redirect to home without visiting the link"
-
             with Db(self.db) as db:
                 db.set_read(item_id)
+            return redirect(request.referrer or url_for("index"))
 
+        @self.app.route("/mark-unread/<int:item_id>", methods=["POST"])
+        def mark_unread(item_id):
+            with Db(self.db) as db:
+                db.set_read(item_id, False)
             return redirect(request.referrer or url_for("index"))
 
         @self.app.route("/upvote/<int:item_id>", methods=["POST"])

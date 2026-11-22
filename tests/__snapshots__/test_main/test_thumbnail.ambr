@@ -11,20 +11,19 @@
     <title>newsyacht</title>
   </head>
     <body>
-  	<div class="navigation">
-    <ul>
-  	<li class=nav><a class=nav href="/">Home</a></li>
-  	<li class=nav><a class=nav href="/archive">Read</a></li>
-    </ul>
-  </div>
+  	<nav class="navigation" aria-label="Main navigation">
+    <a href="/">Recent</a>
+    <a href="/?unread=1">Unread</a>
+    <a href="/archive">Read</a>
+  </nav>
   	<div id="ptr">Pull to refresh…</div>
   	
-  	<h2>Unread</h2>
+  	<h2>Recent</h2>
   	<ul class="post-list">
   	  
   	  
   
-  <li class="post">
+  <li class="post" data-post-id="2">
     <div class="post-vote">
       <form method="post" action="/upvote/2">
         <button
@@ -75,9 +74,9 @@
   		</time>
   		
   		
-  		
-  		· <a href="/mark-read/2">Mark Read</a>
-  		
+  		· <form class="post-read-action" method="post" action="/mark-read/2">
+  		  <button type="submit">Mark read</button>
+  		</form>
   	  </div>
   	</div>
   
@@ -91,7 +90,7 @@
   	  
   	  
   
-  <li class="post">
+  <li class="post" data-post-id="1">
     <div class="post-vote">
       <form method="post" action="/upvote/1">
         <button
@@ -144,9 +143,9 @@
   		
   		· <a href="https://news.ycombinator.com/item?id=46259064">Comments</a>
   		
-  		
-  		· <a href="/mark-read/1">Mark Read</a>
-  		
+  		· <form class="post-read-action" method="post" action="/mark-read/1">
+  		  <button type="submit">Mark read</button>
+  		</form>
   	  </div>
   	</div>
   

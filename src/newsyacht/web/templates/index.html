@@ -5,7 +5,7 @@
 	{% include "nav.html" %}
 	<div id="ptr">Pull to refresh…</div>
 	{% import "posts.html" as p %}
-	<h2>Unread</h2>
+	<h2>{{ 'Unread' if unread_only else 'Recent' }}</h2>
 	<ul class="post-list">
 	  {% for post in posts %}
 	  {{ p.render_post(post) }}
