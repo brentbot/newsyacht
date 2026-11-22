@@ -289,3 +289,47 @@ def test_feed_includes_read_posts(seeded_db, client):
     post = seeded_db.get_posts()[0]
     seeded_db.set_read(post.id)
     assert post.title in client.get(f"/feed/{post.feed_id}").text
+
+
+def test_async_read_response(seeded_db, client):
+    post = seeded_db.get_posts()[0]
+    response = client.post(
+        f"/mark-read/{post.id}",
+        headers={"X-Newsyacht-Fragment": "post"},
+    )
+    assert response.status_code == 200
+    assert 'class="post is-read"' in response.text
+    assert "Mark unread" in response.text
+
+    response = client.post(
+        f"/mark-unread/{post.id}",
+        headers={"X-Newsyacht-Fragment": "post"},
+    )
+    assert response.status_code == 200
+    assert "Mark read" in response.text
+    assert 'class="post is-read"' not in response.text
+
+
+def test_async_vote_response(seeded_db, client):
+    post = seeded_db.get_posts()[0]
+    response = client.post(
+        f"/upvote/{post.id}",
+        headers={"X-Newsyacht-Fragment": "post"},
+    )
+    assert response.status_code == 200
+    assert "vote-up is-active" in response.text
+    assert seeded_db.get_item(post.id).vote == Vote.UP
+
+    reversed_vote = client.post(
+        f"/upvote/{post.id}", headers={"X-Newsyacht-Fragment": "post"}
+    )
+    assert reversed_vote.status_code == 200
+    assert "vote-up is-active" not in reversed_vote.text
+    assert seeded_db.get_item(post.id).vote == Vote.NONE
+
+
+def test_article_opens_in_new_tab(seeded_db, client):
+    response = client.get("/?all=1")
+    assert (
+        f'href="/read/{seeded_db.get_posts()[0].id}" target="_blank"' in response.text
+    )

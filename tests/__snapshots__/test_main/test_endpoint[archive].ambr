@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="/static/style.css">
     <script defer src="/static/pull_to_refresh.js"></script>
+    <script defer src="/static/app.js"></script>
     <title>newsyacht</title>
   </head>
     <body>
@@ -19,7 +20,7 @@
   	<div id="ptr">Pull to refresh…</div>
   	
   	<h2>Read</h2>
-  	<ul class="post-list">
+  	<ul class="post-list" data-read-filter="read">
   	  
   	</ul>
     </body>
