@@ -87,7 +87,8 @@ class App:
         @self.app.route("/read/<int:item_id>")
         def read(item_id):
             with Db(self.db) as db:
-                db.set_read(item_id)
+                if request.args.get("mark") != "0":
+                    db.set_read(item_id)
                 link = db.get_link(item_id)
             return redirect(link)
 

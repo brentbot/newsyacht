@@ -328,8 +328,15 @@ def test_async_vote_response(seeded_db, client):
     assert seeded_db.get_item(post.id).vote == Vote.NONE
 
 
-def test_article_opens_in_new_tab(seeded_db, client):
-    response = client.get("/?all=1")
-    assert (
-        f'href="/read/{seeded_db.get_posts()[0].id}" target="_blank"' in response.text
-    )
+def test_article_redirect_can_leave_read_state_unchanged(seeded_db, client):
+    post = seeded_db.get_posts()[0]
+    path = f"/read/{post.id}"
+
+    response = client.get(path)
+    assert response.location == post.inner.link
+    assert seeded_db.get_item(post.id).is_read
+
+    seeded_db.set_read(post.id, False)
+    response = client.get(f"{path}?mark=0")
+    assert response.location == post.inner.link
+    assert not seeded_db.get_item(post.id).is_read

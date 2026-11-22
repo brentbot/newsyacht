@@ -3,7 +3,6 @@ const pendingPosts = new WeakSet();
 const updatePost = async (url, row, button) => {
   if (pendingPosts.has(row)) return;
   pendingPosts.add(row);
-  const hadFocus = button && document.activeElement === button;
   row.querySelector(".post-action-error")?.remove();
 
   try {
@@ -23,6 +22,7 @@ const updatePost = async (url, row, button) => {
 
     const filter = row.parentElement?.dataset.readFilter;
     const isRead = newRow.classList.contains("is-read");
+    const hadFocus = button && document.activeElement === button;
     if ((filter === "unread" && isRead) || (filter === "read" && !isRead)) {
       const neighbor = row.nextElementSibling ?? row.previousElementSibling;
       row.remove();
@@ -59,5 +59,11 @@ document.addEventListener("click", (event) => {
   const link = event.target.closest("a[data-mark-read-url]");
   if (!link || event.defaultPrevented || event.button !== 0) return;
   const row = link.closest(".post");
-  if (row) void updatePost(link.dataset.markReadUrl, row);
+  if (!row || pendingPosts.has(row)) return;
+
+  // Keep native new-tab navigation while the fragment request marks the post.
+  const articleUrl = new URL(link.href);
+  articleUrl.searchParams.set("mark", "0");
+  link.href = articleUrl.href;
+  void updatePost(link.dataset.markReadUrl, row);
 });
